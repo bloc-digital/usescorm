@@ -1,7 +1,7 @@
 {
   "name": "@blocdigital/usescorm",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React hook for communicating with the SCORM API.",
   "author": "Bloc Digital <web@bloc.digital>",
   "license": "MIT",
@@ -17,9 +17,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bloc-digital/uselocalscorm.git"
+    "url": "git+https://github.com/bloc-digital/usescorm.git"
   },
-  "homepage": "https://github.com/bloc-digital/uselocalscorm/blob/main/README.md",
+  "homepage": "https://github.com/bloc-digital/usescorm/blob/main/README.md",
   "jest": {
     "testEnvironment": "jsdom"
   },
@@ -79,6 +79,6 @@
     "vite": "^4.4.5"
   },
   "bugs": {
-    "url": "https://github.com/bloc-digital/uselocalscorm/issues"
+    "url": "https://github.com/bloc-digital/usescorm/issues"
   }
 }

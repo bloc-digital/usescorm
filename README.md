@@ -45,7 +45,7 @@ const Example = () => {
 
     scorm.on('storage', onStateChange);
 
-    // remember to tidy up you event listeners
+    // remember to tidy up your event listeners
     return () => scorm.off('storage', onStateChange);
   }, [scorm]);
 
