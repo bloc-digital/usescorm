@@ -1,4 +1,4 @@
-# uselocalstorage
+# usestorage
 
 > React hook for communicating with the SCORM API.
 
