@@ -1,4 +1,4 @@
-# usestorage
+# usescorm
 
 > React hook for communicating with the SCORM API.
 
@@ -76,3 +76,46 @@ const Example = () => {
   );
 };
 ```
+
+## Properties
+
+| Name                   | Type    | Default | Description                                                                           |
+| ---------------------- | ------- | ------- | ------------------------------------------------------------------------------------- |
+| version                | string  | '1.2'   | Version of scorm used.                                                                |
+| debug                  | boolean | false   | Whether or not debug mode is enabled.                                                 |
+| handleCompletionStatus | boolean | true    | Whether or not the wrapper should automatically handle the initial completion status. |
+| handleExitMode         | boolean | true    | Whether or not the wrapper should automatically handle the exit mode.                 |
+| autoCommit             | boolean | true    | Whether or not the each action automatically saves.                                   |
+
+## API
+
+| Name                    | Type                                                                             | Description                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| version                 | string                                                                           | Version of scorm used                                                                 |
+| handleCompletionStatus  | boolean                                                                          | Whether or not the wrapper should automatically handle the initial completion status. |
+| handleExitMode          | boolean                                                                          | Whether or not the wrapper should automatically handle the exit mode.                 |
+| autoCommit              | boolean                                                                          | Whether or not the each action automatically saves.                                   |
+| storage                 | unknown                                                                          | Live version of data that is in suspend_data.                                         |
+| API.handle              | null \| IScorm1_2 \| IScorm2004                                                  | Stored version of SCORM API.                                                          |
+| API.isFound             | boolean                                                                          | Whether the SCORM API has been detected or not.                                       |
+| API.find                | (win: Window) => null \| IScorm1_2 \| IScorm2004                                 | Find a copy of SCORM.                                                                 |
+| API.get                 | () => null \| IScorm1_2 \| IScorm2004                                            | Find a copy of SCORM (using current window).                                          |
+| API.getHandle           | () => null \| IScorm1_2 \| IScorm2004                                            | Find a copy of SCORM (using current window + update handle).                          |
+| connection.isActive     | boolean                                                                          | Whether the connection to the SCORM API is active.                                    |
+| data.completionStatus   | lesson_status                                                                    | Current Course completion status.                                                     |
+| data.exitStatus         | boolean                                                                          | Course Exit status.                                                                   |
+| debug.isActive          | boolean                                                                          | Whether or not debug mode is enabled.                                                 |
+| debug.getCode           | () => number                                                                     | Returns the error code that resulted from the last API call.                          |
+| debug.getInfo           | (error: number) => string \| undefined                                           | Returns a short string describing the specified error code.                           |
+| debug.getDiagnosticInfo | (error: number) => string \| undefined                                           | Returns detailed information about the last error that occurred.                      |
+| init                    | () => boolean                                                                    | Begins a communication session with the LMS.                                          |
+| terminate               | () => boolean                                                                    | Ends a communication session with the LMS.                                            |
+| get                     | (parameter: CMIElement) => string                                                | Retrieves a value from the LMS.                                                       |
+| set                     | (parameter: CMIElement, value: string) => boolean                                | Saves a value to the LMS                                                              |
+| store                   | (value: unknown \| ((value: unknown) => unknown)) => boolean                     | Store data in suspense data                                                           |
+| save                    | () => boolean                                                                    | Saves a value to the LMS.                                                             |
+| status                  | (action: 'get' \| 'set', status?: lesson_status) => boolean \| lesson_status     | Update the lesson status.                                                             |
+| on                      | (event: 'init' \| 'set' \| 'storage', callback: (data: unknown) => void) => void | Add event listener for when this component is used.                                   |
+| onAny                   | (callback: (data: unknown) => void) => void                                      | Add event listener, for all events, for when this component is used.                  |
+| off                     | (event: 'init' \| 'set' \| 'storage', callback: (data: unknown) => void) => void | If you exactly match an `on` event you can remove it.                                 |
+| offAny                  | (callback: (data: unknown) => void) => void                                      | If you exactly match an `onAny` function you can remove it.                           |

@@ -1,7 +1,7 @@
 {
   "name": "@blocdigital/usescorm",
   "type": "module",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "React hook for communicating with the SCORM API.",
   "author": "Bloc Digital <web@bloc.digital>",
   "license": "MIT",
