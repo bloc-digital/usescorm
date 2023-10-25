@@ -362,16 +362,6 @@ export interface IScormClass {
    */
   status(action: 'get' | 'set', status?: lesson_status): boolean | lesson_status;
   /**
-   * only console.log if in debug mode
-   *
-   * @param message info to log
-   */
-  log(...message: unknown[]): void;
-  /**
-   * Check if the API is available
-   */
-  isAvailable(): boolean;
-  /**
    * Add event listener for when this component is used.
    *
    * @param event name of event triggered by function
@@ -518,12 +508,13 @@ export class ScormInstance implements IScormClass {
     this._autoCommit = Boolean(autoCommit);
   }
 
-  log(...message: unknown[]) {
+  /**
+   * only console.log if in debug mode
+   *
+   * @param message info to log
+   */
+  private log(...message: unknown[]) {
     if (this.debug.isActive) console.log(...message);
-  }
-
-  isAvailable() {
-    return true;
   }
 
   //----------------------------//
