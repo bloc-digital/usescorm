@@ -123,7 +123,7 @@ export type CMIElement2004 =
   | 'adl.nav.request_valid.choice.{target=}'
   | 'adl.nav.request_valid.jump.{target=}';
 
-export type CMIElement = CMIElement1_2 | CMIElement2004;
+export type CMIElement = CMIElement1_2 | CMIElement2004 | string;
 export type CMIErrorCode = string;
 
 export interface IScorm1_2 {
