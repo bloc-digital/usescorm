@@ -81,7 +81,7 @@ const Example = () => {
 
 | Name                   | Type    | Default | Description                                                                           |
 | ---------------------- | ------- | ------- | ------------------------------------------------------------------------------------- |
-| version                | string  | '1.2'   | Version of scorm used.                                                                |
+| version                | string  | 'auto'  | Version of scorm used.                                                                |
 | debug                  | boolean | false   | Whether or not debug mode is enabled.                                                 |
 | handleCompletionStatus | boolean | true    | Whether or not the wrapper should automatically handle the initial completion status. |
 | handleExitMode         | boolean | true    | Whether or not the wrapper should automatically handle the exit mode.                 |

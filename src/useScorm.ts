@@ -2,10 +2,16 @@ import { useMemo, createContext } from 'react';
 
 import { ScormInstance } from './ScormInstance';
 
-import type { IScormProps, IScormClass } from './ScormInstance';
+import type { IScormProps, IScormClass, availableVersions } from './ScormInstance';
 
-export default function useScorm({ version, debug, handleCompletionStatus, handleExitMode, autoCommit }: IScormProps) {
-  return useMemo<IScormClass>(() => {
+export default function useScorm<T extends availableVersions = 'auto'>({
+  version,
+  debug,
+  handleCompletionStatus,
+  handleExitMode,
+  autoCommit,
+}: IScormProps<T>) {
+  return useMemo(() => {
     const _instance = new ScormInstance({ version, debug, handleCompletionStatus, handleExitMode, autoCommit });
 
     _instance.init();
@@ -14,4 +20,4 @@ export default function useScorm({ version, debug, handleCompletionStatus, handl
   }, [version, debug, handleCompletionStatus, handleExitMode, autoCommit]);
 }
 
-export const ScormContext = createContext<IScormClass | null>(null);
+export const ScormContext = createContext<IScormClass<'auto'> | null>(null);

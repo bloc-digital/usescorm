@@ -1,7 +1,7 @@
-export type availableVersions = '1.2' | '2004';
+export type availableVersions = '1.2' | '2004' | 'auto';
 export type lesson_status = 'passed' | 'completed' | 'failed' | 'incomplete' | 'browsed' | 'not attempted' | 'unknown';
 
-export type CMIElement1_2 =
+type CMIElement1_2 =
   | 'cmi.core._children'
   | 'cmi.core.student_id'
   | 'cmi.core.student_name'
@@ -24,10 +24,15 @@ export type CMIElement1_2 =
   | 'cmi.objectives._children'
   | 'cmi.objectives._count'
   | 'cmi.objectives.n.id'
+  | `cmi.objectives.${number}.id`
   | 'cmi.objectives.n.score._children'
+  | `cmi.objectives.${number}.score._children`
   | 'cmi.objectives.n.score.max'
+  | `cmi.objectives.${number}.score.max`
   | 'cmi.objectives.n.score.min'
+  | `cmi.objectives.${number}.score.min`
   | 'cmi.objectives.n.status'
+  | `cmi.objectives.${number}.status`
   | 'cmi.student_data._children'
   | 'cmi.student_data.mastery_score'
   | 'cmi.student_data.max_time_allowed'
@@ -40,29 +45,46 @@ export type CMIElement1_2 =
   | 'cmi.interactions._children'
   | 'cmi.interactions._count'
   | 'cmi.interactions.n.id'
+  | `cmi.interactions.${number}.id`
   | 'cmi.interactions.n.objectives._count'
+  | `cmi.interactions.${number}.objectives._count`
   | 'cmi.interactions.n.objectives.n.id'
+  | `cmi.interactions.${number}.objectives.${number}.id`
   | 'cmi.interactions.n.time'
+  | `cmi.interactions.${number}.time`
   | 'cmi.interactions.n.type'
+  | `cmi.interactions.${number}.type`
   | 'cmi.interactions.n.correct_responses._count'
+  | `cmi.interactions.${number}.correct_responses._count`
   | 'cmi.interactions.n.correct_responses.n.pattern'
+  | `cmi.interactions.${number}.correct_responses.${number}.pattern`
   | 'cmi.interactions.n.weighting'
+  | `cmi.interactions.${number}.weighting`
   | 'cmi.interactions.n.student_response'
+  | `cmi.interactions.${number}.student_response`
   | 'cmi.interactions.n.result'
-  | 'cmi.interactions.n.latency';
+  | `cmi.interactions.${number}.result`
+  | 'cmi.interactions.n.latency'
+  | `cmi.interactions.${number}.latency`;
 
 export type CMIElement2004 =
   | 'cmi._version'
   | 'cmi.comments_from_learner._children'
   | 'cmi.comments_from_learner._count'
   | 'cmi.comments_from_learner.n.comment'
+  | `cmi.comments_from_learner.${number}.comment`
   | 'cmi.comments_from_learner.n.location'
+  | `cmi.comments_from_learner.${number}.location`
   | 'cmi.comments_from_learner.n.timestamp'
+  | `cmi.comments_from_learner.${number}.timestamp`
   | 'cmi.comments_from_lms._children'
   | 'cmi.comments_from_lms._count'
   | 'cmi.comments_from_lms.n.comment'
+  | `cmi.comments_from_lms.${number}.comment`
   | 'cmi.comments_from_lms.n.location'
+  | `cmi.comments_from_lms.${number}.location`
   | 'cmi.comments_from_lms.n.timestamp'
+  | `cmi.comments_from_lms.${number}.timestamp`
   | 'cmi.completion_status'
   | 'cmi.completion_threshold'
   | 'cmi.credit'
@@ -71,17 +93,29 @@ export type CMIElement2004 =
   | 'cmi.interactions._children'
   | 'cmi.interactions._count'
   | 'cmi.interactions.n.id'
+  | `cmi.interactions.${number}.id`
   | 'cmi.interactions.n.type'
+  | `cmi.interactions.${number}.type`
   | 'cmi.interactions.n.objectives._count'
+  | `cmi.interactions.${number}.objectives._count`
   | 'cmi.interactions.n.objectives.n.id'
+  | `cmi.interactions.${number}.objectives.${number}.id`
   | 'cmi.interactions.n.timestamp'
+  | `cmi.interactions.${number}.timestamp`
   | 'cmi.interactions.n.correct_responses._count'
+  | `cmi.interactions.${number}.correct_responses._count`
   | 'cmi.interactions.n.correct_responses.n.pattern'
+  | `cmi.interactions.${number}.correct_responses.${number}.pattern`
   | 'cmi.interactions.n.weighting'
+  | `cmi.interactions.${number}.weighting`
   | 'cmi.interactions.n.learner_response'
+  | `cmi.interactions.${number}.learner_response`
   | 'cmi.interactions.n.result'
+  | `cmi.interactions.${number}.result`
   | 'cmi.interactions.n.latency'
+  | `cmi.interactions.${number}.latency`
   | 'cmi.interactions.n.description'
+  | `cmi.interactions.${number}.description`
   | 'cmi.launch_data'
   | 'cmi.learner_id'
   | 'cmi.learner_name'
@@ -96,15 +130,25 @@ export type CMIElement2004 =
   | 'cmi.objectives._children'
   | 'cmi.objectives._count'
   | 'cmi.objectives.n.id'
+  | `cmi.objectives.${number}.id`
   | 'cmi.objectives.n.score._children'
+  | `cmi.objectives.${number}.score._children`
   | 'cmi.objectives.n.score.scaled'
+  | `cmi.objectives.${number}.score.scaled`
   | 'cmi.objectives.n.score.raw'
+  | `cmi.objectives.${number}.score.raw`
   | 'cmi.objectives.n.score.min'
+  | `cmi.objectives.${number}.score.min`
   | 'cmi.objectives.n.score.max'
+  | `cmi.objectives.${number}.score.max`
   | 'cmi.objectives.n.success_status'
+  | `cmi.objectives.${number}.success_status`
   | 'cmi.objectives.n.completion_status'
+  | `cmi.objectives.${number}.completion_status`
   | 'cmi.objectives.n.progress_measure'
+  | `cmi.objectives.${number}.progress_measure`
   | 'cmi.objectives.n.description'
+  | `cmi.objectives.${number}.description`
   | 'cmi.progress_measure'
   | 'cmi.scaled_passing_score'
   | 'cmi.score._children'
@@ -120,10 +164,9 @@ export type CMIElement2004 =
   | 'adl.nav.request'
   | 'adl.nav.request_valid.continue'
   | 'adl.nav.request_valid.previous'
-  | 'adl.nav.request_valid.choice.{target=}'
-  | 'adl.nav.request_valid.jump.{target=}';
+  | `adl.nav.request_valid.choice.{target=}`
+  | `adl.nav.request_valid.jump.{target=}`;
 
-export type CMIElement = CMIElement1_2 | CMIElement2004 | string;
 export type CMIErrorCode = string;
 
 export interface IScorm1_2 {
@@ -196,11 +239,18 @@ export interface IScorm2004 {
   GetDiagnostic(errorCode: CMIErrorCode): string;
 }
 
-export interface IScormProps {
+type IScorm<T> = T extends '1.2' ? IScorm1_2 : T extends '2004' ? IScorm2004 : IScorm1_2 & IScorm2004;
+type CMIElement<T> = T extends '1.2'
+  ? CMIElement1_2
+  : T extends '2004'
+    ? CMIElement2004
+    : CMIElement1_2 & CMIElement2004;
+
+export interface IScormProps<T> {
   /**
    * Version of scorm used
    */
-  version?: availableVersions;
+  version?: T | availableVersions;
   /**
    * Whether or not debug mode is enabled
    */
@@ -223,27 +273,27 @@ export interface IScormProps {
   autoCommit?: boolean;
 }
 
-export interface IScormClass {
+export interface IScormClass<T> {
   /**
    * Version of scorm used
    */
-  version: IScormProps['version'];
+  version: IScormProps<T>['version'];
   /**
    * Whether or not the wrapper should automatically handle the initial completion status
    *
    * @default true
    */
-  handleCompletionStatus: IScormProps['handleCompletionStatus'];
+  handleCompletionStatus: IScormProps<T>['handleCompletionStatus'];
   /**
    * Whether or not the wrapper should automatically handle the exit mode
    *
    * @default true
    */
-  handleExitMode: IScormProps['handleExitMode'];
+  handleExitMode: IScormProps<T>['handleExitMode'];
   /**
    * Whether or not the each action automatically saves
    */
-  autoCommit: IScormProps['autoCommit'];
+  autoCommit: IScormProps<T>['autoCommit'];
   /**
    * Live version of data that is in suspend_data
    */
@@ -255,7 +305,7 @@ export interface IScormClass {
     /**
      * Stored version of SCORM API
      */
-    handle: null | IScorm1_2 | IScorm2004;
+    handle: null | IScorm<T>;
     /**
      * Whether the SCORM API has been detected or not
      */
@@ -265,15 +315,15 @@ export interface IScormClass {
      *
      * @param win the window
      */
-    find(win: Window): null | IScorm1_2 | IScorm2004;
+    find(win: Window): null | IScorm<T>;
     /**
      * Find a copy of SCORM (using current window)
      */
-    get(): null | IScorm1_2 | IScorm2004;
+    get(): null | IScorm<T>;
     /**
      * Find a copy of SCORM (using current window + update handle)
      */
-    getHandle(): null | IScorm1_2 | IScorm2004;
+    getHandle(): null | IScorm<T>;
   };
   /**
    * Stored information about the connection
@@ -301,7 +351,7 @@ export interface IScormClass {
     /**
      * Whether or not debug mode is enabled
      */
-    isActive: IScormProps['debug'];
+    isActive: IScormProps<T>['debug'];
     /**
      * Returns the error code that resulted from the last API call
      *
@@ -336,14 +386,14 @@ export interface IScormClass {
    *
    * @param parameter name of parameter to update
    */
-  get(parameter: CMIElement): string;
+  get(parameter: CMIElement<T> | string): string;
   /**
    * Saves a value to the LMS.
    *
    * @param parameter name of parameter to update
    * @param value new value
    */
-  set(parameter: CMIElement, value: string): boolean;
+  set(parameter: CMIElement<T> | string, value: string): boolean;
   /**
    * Store data in suspense data
    *
@@ -413,8 +463,9 @@ declare global {
 const parseBool = (value: unknown): boolean => {
   switch (typeof value) {
     case 'object':
+      return true;
     case 'string':
-      return /(true|1)/i.test(value as string);
+      return /(true|1)/i.test(value);
     case 'number':
       return !!value;
     case 'boolean':
@@ -439,11 +490,11 @@ const calculateStringSizeInBytes = (str: string): number => {
   return encodedString.length;
 };
 
-export class ScormInstance implements IScormClass {
-  private _version: IScormClass['version'];
-  private _handleCompletionStatus: IScormClass['handleCompletionStatus'];
-  private _handleExitMode: IScormClass['handleExitMode'];
-  private _autoCommit: IScormClass['autoCommit'];
+export class ScormInstance<T extends availableVersions = 'auto'> implements IScormClass<T> {
+  private _version: IScormClass<T>['version'];
+  private _handleCompletionStatus: IScormClass<T>['handleCompletionStatus'];
+  private _handleExitMode: IScormClass<T>['handleExitMode'];
+  private _autoCommit: IScormClass<T>['autoCommit'];
 
   private onList: { type: 'init' | 'set' | 'storage'; callback: (data: unknown) => void }[] = [];
   private onAnyList: { callback: (type: 'init' | 'set' | 'storage', data: unknown) => void }[] = [];
@@ -465,12 +516,12 @@ export class ScormInstance implements IScormClass {
   }
 
   get storage() {
-    const _storage = this.get('cmi.suspend_data');
+    const _storage = this.get('cmi.suspend_data' as CMIElement<T>);
 
     return _storage ? JSON.parse(_storage) : null;
   }
 
-  API: IScormClass['API'] = {
+  API: IScormClass<T>['API'] = {
     handle: null,
     isFound: false,
     find: this.scormApiFind.bind(this),
@@ -478,14 +529,14 @@ export class ScormInstance implements IScormClass {
     getHandle: this.scormApiGetHandle.bind(this),
   };
 
-  connection: IScormClass['connection'] = { isActive: false };
+  connection: IScormClass<T>['connection'] = { isActive: false };
 
-  data: IScormClass['data'] = {
+  data: IScormClass<T>['data'] = {
     completionStatus: 'not attempted',
     exitStatus: false,
   };
 
-  debug: IScormClass['debug'] = {
+  debug: IScormClass<T>['debug'] = {
     isActive: false,
     getCode: this.scormDebugGetCode.bind(this),
     getInfo: this.scormDebugGetInfo.bind(this),
@@ -498,7 +549,7 @@ export class ScormInstance implements IScormClass {
     handleCompletionStatus = true,
     handleExitMode = true,
     autoCommit = true,
-  }: IScormProps) {
+  }: IScormProps<T>) {
     // Set up params
     this._version = version;
     this.debug.isActive = Boolean(debug);
@@ -621,19 +672,19 @@ export class ScormInstance implements IScormClass {
           if (completionStatus !== 'completed' && completionStatus !== 'passed') {
             switch (version) {
               case '1.2':
-                success = this.set('cmi.core.exit', 'suspend');
+                success = this.set('cmi.core.exit' as CMIElement<T>, 'suspend');
                 break;
               case '2004':
-                success = this.set('cmi.exit', 'suspend');
+                success = this.set('cmi.exit' as CMIElement<T>, 'suspend');
                 break;
             }
           } else {
             switch (version) {
               case '1.2':
-                success = this.set('cmi.core.exit', 'logout');
+                success = this.set('cmi.core.exit' as CMIElement<T>, 'logout');
                 break;
               case '2004':
-                success = this.set('cmi.exit', 'normal');
+                success = this.set('cmi.exit' as CMIElement<T>, 'normal');
                 break;
             }
           }
@@ -677,7 +728,7 @@ export class ScormInstance implements IScormClass {
   //         SCORM Data         //
   //----------------------------//
 
-  get(parameter: CMIElement) {
+  get(parameter: CMIElement<T>) {
     const { debug, connection, version, data } = this;
 
     const traceMsgPrefix = "SCORM.data.get('" + parameter + "') ";
@@ -734,7 +785,7 @@ export class ScormInstance implements IScormClass {
     return String(value);
   }
 
-  set(parameter: CMIElement, value: string) {
+  set(parameter: CMIElement<T>, value: string) {
     const { debug, connection, version, data } = this;
 
     const traceMsgPrefix = "SCORM.data.set('" + parameter + "') ";
@@ -799,7 +850,7 @@ export class ScormInstance implements IScormClass {
       );
     }
 
-    const success = this.set('cmi.suspend_data', string);
+    const success = this.set('cmi.suspend_data' as CMIElement<T>, string);
 
     if (!success) return false;
 
@@ -845,7 +896,7 @@ export class ScormInstance implements IScormClass {
     const { version } = this;
 
     const traceMsgPrefix = 'SCORM.getStatus failed';
-    const cmi = version === '1.2' ? 'cmi.core.lesson_status' : 'cmi.completion_status';
+    const cmi = (version === '1.2' ? 'cmi.core.lesson_status' : 'cmi.completion_status') as CMIElement<T>;
 
     if (!action) {
       this.log(traceMsgPrefix + ': action was not specified.');
@@ -856,14 +907,14 @@ export class ScormInstance implements IScormClass {
       case 'get':
         return this.get(cmi) as lesson_status;
       case 'set':
-        if (status === null) {
+        if (!status) {
           this.log(traceMsgPrefix + ': status was not specified.');
           return false;
         }
 
-        if (!this.autoCommit) return this.set(cmi, status as lesson_status);
+        if (!this.autoCommit) return this.set(cmi, status);
 
-        this.set(cmi, status as lesson_status);
+        this.set(cmi, status);
 
         return this.save();
       default:
@@ -881,11 +932,11 @@ export class ScormInstance implements IScormClass {
    *
    * @param win the window
    */
-  private scormApiFind(win: Window): null | IScorm1_2 | IScorm2004 {
+  private scormApiFind(win: Window): null | IScorm<T> {
     const findAttemptLimit = 500;
     const traceMsgPrefix = 'SCORM.API.find';
 
-    let API = null;
+    let API: null | IScorm<T> = null;
     let findAttempts = 0;
 
     while (!win.API && !win.API_1484_11 && win.parent && win.parent != win && findAttempts <= findAttemptLimit) {
@@ -898,7 +949,7 @@ export class ScormInstance implements IScormClass {
       switch (this.version) {
         case '2004':
           if (win.API_1484_11) {
-            API = win.API_1484_11;
+            API = win.API_1484_11 as IScorm<T>;
           } else {
             this.log(`${traceMsgPrefix}: SCORM version 2004 was specified by user, but API_1484_11 cannot be found.`);
           }
@@ -907,7 +958,7 @@ export class ScormInstance implements IScormClass {
 
         case '1.2':
           if (win.API) {
-            API = win.API;
+            API = win.API as IScorm<T>;
           } else {
             this.log(`${traceMsgPrefix}: SCORM version 1.2 was specified by user, but API cannot be found.`);
           }
@@ -920,13 +971,13 @@ export class ScormInstance implements IScormClass {
       if (win.API_1484_11) {
         //SCORM 2004-specific API.
 
-        this._version = '2004'; //Set version
-        API = win.API_1484_11;
+        this._version = '2004' as T; //Set version
+        API = win.API_1484_11 as IScorm<T>;
       } else if (win.API) {
         //SCORM 1.2-specific API
 
-        this._version = '1.2'; //Set version
-        API = win.API;
+        this._version = '1.2' as T; //Set version
+        API = win.API as IScorm<T>;
       }
     }
 
@@ -945,7 +996,7 @@ export class ScormInstance implements IScormClass {
   /**
    * Find a copy of SCORM (using current window)
    */
-  private scormApiGet(): null | IScorm1_2 | IScorm2004 {
+  private scormApiGet(): null | IScorm<T> {
     const win = window;
 
     let API = this.scormApiFind(win);
@@ -976,7 +1027,7 @@ export class ScormInstance implements IScormClass {
   /**
    * Find a copy of SCORM (using current window + update handle)
    */
-  private scormApiGetHandle(): null | IScorm1_2 | IScorm2004 {
+  private scormApiGetHandle(): null | IScorm<T> {
     const { API } = this;
 
     if (!API.handle && !API.isFound) API.handle = this.scormApiGet();
