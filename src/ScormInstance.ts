@@ -939,58 +939,58 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
     let API: null | IScorm<T> = null;
     let findAttempts = 0;
 
-    while (!win.API && !win.API_1484_11 && win.parent && win.parent != win && findAttempts <= findAttemptLimit) {
-      findAttempts++;
-      win = win.parent;
-    }
+    try {
+      while (!win.API && !win.API_1484_11 && win.parent && win.parent != win && findAttempts <= findAttemptLimit) {
+        findAttempts++;
+        win = win.parent;
+      }
 
-    //If SCORM version is specified by user, look for specific API
-    if (this.version) {
-      switch (this.version) {
-        case '2004':
-          if (win.API_1484_11) {
+      //If SCORM version is specified by user, look for specific API
+      if (this.version) {
+        switch (this.version) {
+          case '2004':
+            if (!win.API_1484_11)
+              throw new Error(
+                `${traceMsgPrefix}: SCORM version 2004 was specified by user, but API_1484_11 cannot be found.`,
+              );
+
             API = win.API_1484_11 as IScorm<T>;
-          } else {
-            this.log(`${traceMsgPrefix}: SCORM version 2004 was specified by user, but API_1484_11 cannot be found.`);
-          }
+            break;
 
-          break;
+          case '1.2':
+            if (!win.API)
+              throw new Error(`${traceMsgPrefix}: SCORM version 1.2 was specified by user, but API cannot be found.`);
 
-        case '1.2':
-          if (win.API) {
             API = win.API as IScorm<T>;
-          } else {
-            this.log(`${traceMsgPrefix}: SCORM version 1.2 was specified by user, but API cannot be found.`);
-          }
-
-          break;
+            break;
+        }
+      } else {
+        //If SCORM version not specified by user, look for APIs
+        if (win.API_1484_11) {
+          //SCORM 2004-specific API.
+          this._version = '2004' as T; //Set version
+          API = win.API_1484_11 as IScorm<T>;
+        } else if (win.API) {
+          //SCORM 1.2-specific API
+          this._version = '1.2' as T; //Set version
+          API = win.API as IScorm<T>;
+        }
       }
-    } else {
-      //If SCORM version not specified by user, look for APIs
 
-      if (win.API_1484_11) {
-        //SCORM 2004-specific API.
-
-        this._version = '2004' as T; //Set version
-        API = win.API_1484_11 as IScorm<T>;
-      } else if (win.API) {
-        //SCORM 1.2-specific API
-
-        this._version = '1.2' as T; //Set version
-        API = win.API as IScorm<T>;
-      }
-    }
-
-    if (API) {
-      this.log(`${traceMsgPrefix}: API found. Version: ${this.version}`);
-      this.log('API:', API);
-    } else {
-      this.log(`${traceMsgPrefix}: Error finding API. 
+      if (!API)
+        throw new Error(`${traceMsgPrefix}: Error finding API. 
   Find attempts: ${findAttempts}
   Find attempt limit: ${findAttemptLimit}`);
-    }
 
-    return API;
+      this.log(`${traceMsgPrefix}: API found. Version: ${this.version}`);
+      this.log('API:', API);
+
+      return API;
+    } catch (err) {
+      this.log(err);
+
+      return null;
+    }
   }
 
   /**
