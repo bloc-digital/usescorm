@@ -999,29 +999,23 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
   private scormApiGet(): null | IScorm<T> {
     const win = window;
 
-    let API = this.scormApiFind(win);
+    try {
+      const API: IScorm<T> | null =
+        this.scormApiFind(win) ||
+        (win.parent && win.parent != win && this.scormApiFind(win.parent)) ||
+        (win.top?.opener && this.scormApiFind(win.top.opener)) ||
+        (win.top?.opener.document && this.scormApiFind(win.top.opener.document));
 
-    if (!API && win.parent && win.parent != win) {
-      API = this.scormApiFind(win.parent);
-    }
+      if (!API) throw new Error("API.get failed: Can't find the API!");
 
-    if (!API && win.top && win.top.opener) {
-      API = this.scormApiFind(win.top.opener);
-    }
-
-    //Special handling for Plateau
-    //Thanks to Joseph Venditti for the patch
-    if (!API && win.top && win.top.opener && win.top.opener.document) {
-      API = this.scormApiFind(win.top.opener.document);
-    }
-
-    if (API) {
       this.API.isFound = true;
-    } else {
-      this.log("API.get failed: Can't find the API!");
-    }
 
-    return API;
+      return API;
+    } catch (err) {
+      this.log(err);
+
+      return null;
+    }
   }
 
   /**
