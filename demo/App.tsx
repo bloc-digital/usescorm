@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import useScorm from '../src/index.js';
 
+import type { ScormBridge } from '../src/bridge/index.js';
+
 type LogEntry = {
   id: number;
   time: string;
@@ -19,8 +21,8 @@ const initialValues = {
   progress: '0.5',
 };
 
-export default function App() {
-  const scorm = useScorm({ debug: true, autoCommit: false });
+export default function App({ bridge }: { bridge?: ScormBridge }) {
+  const scorm = useScorm({ debug: true, autoCommit: false, api: bridge?.api });
   const [active, setActive] = useState(false);
   const [ended, setEnded] = useState(false);
   const [values, setValues] = useState(initialValues);
@@ -88,6 +90,20 @@ export default function App() {
 
     return () => controller.abort();
   }, [log, run, scorm]);
+
+  useEffect(() => {
+    if (!bridge) return;
+
+    const controller = new AbortController();
+
+    bridge.addEventListener(
+      'error',
+      ({ detail }) => log('error', `Bridge: LMS rejected ${detail.type}`, JSON.stringify(detail, null, 2)),
+      { signal: controller.signal },
+    );
+
+    return () => controller.abort();
+  }, [bridge, log]);
 
   useEffect(() => {
     setValues((previous) => ({
@@ -170,6 +186,12 @@ export default function App() {
             API detected: {scorm.API.isFound ? `SCORM ${scorm.version}` : 'none'}. Changes are not automatically
             committed. Initialization may mark a new attempt incomplete.
           </p>
+          {bridge && (
+            <p>
+              Connected through the postMessage bridge to <code>{bridge.origin}</code>. Writes report success
+              immediately; use <strong>Confirm with LMS</strong> to wait for the LMS responses.
+            </p>
+          )}
         </div>
         <div className="actions">
           <button disabled={active || ended} onClick={() => run('Initialize', () => scorm.init())}>
@@ -178,6 +200,25 @@ export default function App() {
           <button disabled={!active} onClick={() => run('Commit', () => scorm.save())}>
             Commit changes
           </button>
+          {bridge && (
+            <button
+              onClick={() =>
+                bridge
+                  .flush()
+                  .then((ok) =>
+                    log(
+                      ok ? 'success' : 'error',
+                      'Confirm with LMS',
+                      ok
+                        ? 'The LMS accepted every request since the last check.'
+                        : 'At least one request was rejected; see the bridge errors above.',
+                    ),
+                  )
+              }
+            >
+              Confirm with LMS
+            </button>
+          )}
           <button
             className="danger"
             disabled={!active}

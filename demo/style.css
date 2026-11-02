@@ -88,6 +88,10 @@ p {
   margin: 6px 0 0;
   color: #6d501b;
 }
+.demo-warning {
+  max-width: 1192px;
+  margin: 24px auto 0;
+}
 .card {
   background: white;
   border: 1px solid #d9e2ef;

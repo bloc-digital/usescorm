@@ -293,6 +293,10 @@ export interface IScormProps<T extends availableVersions = 'auto'> {
    * Whether or not the each action automatically saves
    */
   autoCommit?: boolean;
+  /**
+   * Use this SCORM API object instead of searching parent windows, e.g. `bridge.api` from `@blocdigital/usescorm/bridge`
+   */
+  api?: IScorm1_2 | IScorm2004;
 }
 
 export interface IScormClass<T extends availableVersions = 'auto'> {
@@ -468,7 +472,7 @@ declare global {
  * @param {unknown} value any data
  * @returns {boolean} converted value
  */
-const parseBool = (value: unknown): boolean =>
+export const parseBool = (value: unknown): boolean =>
   value === true || value === 1 || (typeof value === 'string' && ['true', '1'].includes(value.trim().toLowerCase()));
 
 /**
@@ -491,6 +495,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
   private _handleCompletionStatus: boolean;
   private _handleExitMode: boolean;
   private _autoCommit: boolean;
+  private readonly _api?: IScorm1_2 | IScorm2004;
 
   private readonly eventTarget = new TypedEventTarget<ScormEvents>();
 
@@ -544,6 +549,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
     handleCompletionStatus = true,
     handleExitMode = true,
     autoCommit = true,
+    api,
   }: IScormProps<T>) {
     // Set up params
     this._version = (version ?? 'auto') as IScormClass<T>['version'];
@@ -551,6 +557,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
     this._handleCompletionStatus = handleCompletionStatus;
     this._handleExitMode = Boolean(handleExitMode);
     this._autoCommit = Boolean(autoCommit);
+    this._api = api;
   }
 
   /**
@@ -1006,6 +1013,8 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
    * Find a copy of SCORM (using current window)
    */
   private scormApiGet(): null | IScorm<T> {
+    if (this._api) return this.scormApiUseInjected(this._api);
+
     if (typeof window === 'undefined') return null;
 
     const win = window;
@@ -1026,6 +1035,23 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
       return null;
     }
+  }
+
+  /**
+   * Use an API supplied through props, detecting its version from the method names.
+   */
+  private scormApiUseInjected(api: IScorm1_2 | IScorm2004): null | IScorm<T> {
+    const detected = 'Initialize' in api ? '2004' : '1.2';
+
+    if (this._version !== 'auto' && this._version !== detected) {
+      this.log(`SCORM.API.get: SCORM ${this._version} was specified, but the supplied API is SCORM ${detected}.`);
+      return null;
+    }
+
+    this._version = detected as IScormClass<T>['version'];
+    this.API.isFound = true;
+
+    return api as IScorm<T>;
   }
 
   /**

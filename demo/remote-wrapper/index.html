@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>useScorm remote course wrapper</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .missing {
+        font: 16px/1.5 system-ui, sans-serif;
+        color: #17243b;
+        max-width: 40rem;
+        margin: 3rem auto;
+        padding: 0 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <iframe id="course" title="Remote SCORM course" allow="fullscreen"></iframe>
+    <script src="usescorm-host.js"></script>
+    <script>
+      // Set to the URL where demo-dist/remote-course is hosted, or pass --course-url to npm run build:demo.
+      var COURSE_URL = '__COURSE_URL__';
+
+      (function () {
+        var iframe = document.getElementById('course');
+        var url = null;
+
+        try {
+          url = new URL(COURSE_URL);
+        } catch (error) {}
+
+        if (!url || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
+          iframe.remove();
+          document.body.insertAdjacentHTML(
+            'beforeend',
+            '<main class="missing"><h1>Course URL not set</h1>' +
+              '<p>Rebuild the package with <code>npm run build:demo -- --course-url=https://…</code>, ' +
+              'pointing at the hosted remote course, and upload the new ZIP.</p></main>',
+          );
+          return;
+        }
+
+        // Demo only: tells the course which origin to trust. Production courses should hard-code their LMS origins.
+        url.searchParams.set('scormHost', window.location.origin);
+
+        UseScormHost.createScormHost({ iframe: iframe, debug: true });
+        iframe.src = url.href;
+      })();
+    </script>
+  </body>
+</html>

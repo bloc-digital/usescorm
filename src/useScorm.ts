@@ -10,9 +10,10 @@ export default function useScorm<T extends availableVersions = 'auto'>({
   handleCompletionStatus,
   handleExitMode,
   autoCommit,
+  api,
 }: IScormProps<T>) {
   const [instance] = useState(
-    new ScormInstance({ version, debug, handleCompletionStatus, handleExitMode, autoCommit }),
+    new ScormInstance({ version, debug, handleCompletionStatus, handleExitMode, autoCommit, api }),
   );
 
   useEffect(() => {

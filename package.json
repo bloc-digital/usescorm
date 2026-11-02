@@ -29,6 +29,14 @@
   "types": "dist/types/index.d.ts",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
+  "sideEffects": false,
+  "typesVersions": {
+    "*": {
+      "bridge": [
+        "dist/types/bridge/index.d.ts"
+      ]
+    }
+  },
   "exports": {
     ".": {
       "import": {
@@ -40,6 +48,17 @@
         "default": "./dist/cjs/index.js"
       }
     },
+    "./bridge": {
+      "import": {
+        "types": "./dist/types/bridge/index.d.ts",
+        "default": "./dist/esm/bridge/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/bridge/index.d.ts",
+        "default": "./dist/cjs/bridge/index.js"
+      }
+    },
+    "./host.js": "./dist/host/usescorm-host.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -47,7 +66,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && tsc -p tsconfig-types.json && node scripts/write-cjs-package.cjs",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && tsc -p tsconfig-types.json && node scripts/write-cjs-package.cjs && vite build --config vite.host.config.ts",
     "build:demo": "tsc -p demo/tsconfig.json && node scripts/build-demo.mjs",
     "lint": "eslint src demo --max-warnings 0",
     "preview": "vite preview",
