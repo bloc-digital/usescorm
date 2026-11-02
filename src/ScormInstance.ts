@@ -1,7 +1,12 @@
-export type availableVersions = '1.2' | '2004' | 'auto';
-export type lesson_status = 'passed' | 'completed' | 'failed' | 'incomplete' | 'browsed' | 'not attempted' | 'unknown';
+import { TypedEventTarget } from './TypedEventTarget.js';
 
-type CMIElement1_2 =
+export type availableVersions = '1.2' | '2004' | 'auto';
+export type Scorm12LessonStatus = 'passed' | 'completed' | 'failed' | 'incomplete' | 'browsed' | 'not attempted';
+export type Scorm2004CompletionStatus = 'completed' | 'incomplete' | 'not attempted' | 'unknown';
+export type Scorm2004SuccessStatus = 'passed' | 'failed' | 'unknown';
+export type lesson_status = Scorm12LessonStatus | Scorm2004CompletionStatus | Scorm2004SuccessStatus;
+
+export type CMIElement1_2 =
   | 'cmi.core._children'
   | 'cmi.core.student_id'
   | 'cmi.core.student_name'
@@ -9,7 +14,7 @@ type CMIElement1_2 =
   | 'cmi.core.credit'
   | 'cmi.core.lesson_status'
   | 'cmi.core.entry'
-  | 'cmi.core.score_children'
+  | 'cmi.core.score._children'
   | 'cmi.core.score.raw'
   | 'cmi.core.score.max'
   | 'cmi.core.score.min'
@@ -27,6 +32,8 @@ type CMIElement1_2 =
   | `cmi.objectives.${number}.id`
   | 'cmi.objectives.n.score._children'
   | `cmi.objectives.${number}.score._children`
+  | 'cmi.objectives.n.score.raw'
+  | `cmi.objectives.${number}.score.raw`
   | 'cmi.objectives.n.score.max'
   | `cmi.objectives.${number}.score.max`
   | 'cmi.objectives.n.score.min'
@@ -161,23 +168,29 @@ export type CMIElement2004 =
   | 'cmi.suspend_data'
   | 'cmi.time_limit_action'
   | 'cmi.total_time'
+  | 'adl.data._count'
+  | 'adl.data.n.id'
+  | `adl.data.${number}.id`
+  | 'adl.data.n.store'
+  | `adl.data.${number}.store`
   | 'adl.nav.request'
   | 'adl.nav.request_valid.continue'
   | 'adl.nav.request_valid.previous'
-  | `adl.nav.request_valid.choice.{target=}`
-  | `adl.nav.request_valid.jump.{target=}`;
+  | `adl.nav.request_valid.choice.{target=${string}}`
+  | `adl.nav.request_valid.jump.{target=${string}}`;
 
 export type CMIErrorCode = string;
+export type ScormBooleanResult = boolean | string;
 
 export interface IScorm1_2 {
   /**
    * Begins a communication session with the LMS.
    */
-  LMSInitialize(msg: string): boolean;
+  LMSInitialize(msg: string): ScormBooleanResult;
   /**
    * Ends a communication session with the LMS.
    */
-  LMSFinish(msg: string): boolean;
+  LMSFinish(msg: string): ScormBooleanResult;
   /**
    * Retrieves a value from the LMS.
    */
@@ -185,11 +198,11 @@ export interface IScorm1_2 {
   /**
    * Saves a value to the LMS.
    */
-  LMSSetValue(element: CMIElement1_2, value: string): string;
+  LMSSetValue(element: CMIElement1_2, value: string): ScormBooleanResult;
   /**
    * Indicates to the LMS that all data should be persisted (not required).
    */
-  LMSCommit(msg: string): boolean;
+  LMSCommit(msg: string): ScormBooleanResult;
   /**
    * Returns the error code that resulted from the last API call.
    */
@@ -208,11 +221,11 @@ export interface IScorm2004 {
   /**
    * Begins a communication session with the LMS.
    */
-  Initialize(msg: string): boolean;
+  Initialize(msg: string): ScormBooleanResult;
   /**
    * Ends a communication session with the LMS.
    */
-  Terminate(msg: string): boolean;
+  Terminate(msg: string): ScormBooleanResult;
   /**
    * Retrieves a value from the LMS.
    */
@@ -220,11 +233,11 @@ export interface IScorm2004 {
   /**
    * Saves a value to the LMS.
    */
-  SetValue(element: CMIElement2004, value: string): string;
+  SetValue(element: CMIElement2004, value: string): ScormBooleanResult;
   /**
    * Indicates to the LMS that all data should be persisted (not required).
    */
-  Commit(msg: string): boolean;
+  Commit(msg: string): ScormBooleanResult;
   /**
    * Returns the error code that resulted from the last API call.
    */
@@ -239,18 +252,27 @@ export interface IScorm2004 {
   GetDiagnostic(errorCode: CMIErrorCode): string;
 }
 
-type IScorm<T> = T extends '1.2' ? IScorm1_2 : T extends '2004' ? IScorm2004 : IScorm1_2 & IScorm2004;
-type CMIElement<T> = T extends '1.2'
+export type IScorm<T extends availableVersions> = T extends '1.2'
+  ? IScorm1_2
+  : T extends '2004'
+    ? IScorm2004
+    : IScorm1_2 | IScorm2004;
+export type CMIElement<T extends availableVersions> = T extends '1.2'
   ? CMIElement1_2
   : T extends '2004'
     ? CMIElement2004
-    : CMIElement1_2 & CMIElement2004;
+    : CMIElement1_2 | CMIElement2004;
+export type CompletionStatus<T extends availableVersions> = T extends '1.2'
+  ? Scorm12LessonStatus
+  : T extends '2004'
+    ? Scorm2004CompletionStatus
+    : Scorm12LessonStatus | Scorm2004CompletionStatus;
 
-export interface IScormProps<T> {
+export interface IScormProps<T extends availableVersions = 'auto'> {
   /**
    * Version of scorm used
    */
-  version?: T | availableVersions;
+  version?: T;
   /**
    * Whether or not debug mode is enabled
    */
@@ -273,27 +295,27 @@ export interface IScormProps<T> {
   autoCommit?: boolean;
 }
 
-export interface IScormClass<T> {
+export interface IScormClass<T extends availableVersions = 'auto'> {
   /**
    * Version of scorm used
    */
-  version: IScormProps<T>['version'];
+  version: T extends 'auto' ? availableVersions : T;
   /**
    * Whether or not the wrapper should automatically handle the initial completion status
    *
    * @default true
    */
-  handleCompletionStatus: IScormProps<T>['handleCompletionStatus'];
+  handleCompletionStatus: boolean;
   /**
    * Whether or not the wrapper should automatically handle the exit mode
    *
    * @default true
    */
-  handleExitMode: IScormProps<T>['handleExitMode'];
+  handleExitMode: boolean;
   /**
    * Whether or not the each action automatically saves
    */
-  autoCommit: IScormProps<T>['autoCommit'];
+  autoCommit: boolean;
   /**
    * Live version of data that is in suspend_data
    */
@@ -341,7 +363,7 @@ export interface IScormClass<T> {
     /**
      * Current Course completion status
      */
-    completionStatus: lesson_status;
+    completionStatus: CompletionStatus<T>;
     /**
      * Course Exit status
      */
@@ -351,7 +373,7 @@ export interface IScormClass<T> {
     /**
      * Whether or not debug mode is enabled
      */
-    isActive: IScormProps<T>['debug'];
+    isActive: boolean;
     /**
      * Returns the error code that resulted from the last API call
      *
@@ -376,7 +398,7 @@ export interface IScormClass<T> {
   /**
    * Begins a communication session with the LMS.
    */
-  init(): boolean | undefined;
+  init(): boolean;
   /**
    * Ends a communication session with the LMS.
    */
@@ -386,14 +408,14 @@ export interface IScormClass<T> {
    *
    * @param parameter name of parameter to update
    */
-  get(parameter: CMIElement<T> | string): string;
+  get(parameter: CMIElement<T>): string;
   /**
    * Saves a value to the LMS.
    *
    * @param parameter name of parameter to update
    * @param value new value
    */
-  set(parameter: CMIElement<T> | string, value: string): boolean;
+  set(parameter: CMIElement<T>, value: string): boolean;
   /**
    * Store data in suspense data
    *
@@ -410,42 +432,28 @@ export interface IScormClass<T> {
    * @param action get or set
    * @param status next status
    */
-  status(action: 'get' | 'set', status?: lesson_status): boolean | lesson_status;
-  /**
-   * Add event listener for when this component is used.
-   *
-   * @param event name of event triggered by function
-   * @param callback a callback function to be called when event matches
-   *
-   * @example scorm.on('set', (data) => {
-   *   console.log(data)
-   * })
-   */
-  on: (event: 'init' | 'set' | 'storage', callback: (data: unknown) => void) => void;
-  /**
-   * Add event listener, for all events, for when this component is used.
-   *
-   * @param callback a callback function to be called when any event is triggered
-   *
-   * @example scorm.onAny((key) => {
-   *   const data = storage.get(key);
-   *   console.log(data)
-   * })
-   */
-  onAny: (callback: (data: unknown) => void) => void;
-  /**
-   * If you exactly match an `on` event you can remove it
-   *
-   * @param event matching event name
-   * @param callback matching function
-   */
-  off: (event: 'init' | 'set' | 'storage', callback: (data: unknown) => void) => void;
-  /**
-   * If you exactly match an `onAny` function you can remove it
-   *
-   * @param callback matching function
-   */
-  offAny: (callback: (data: unknown) => void) => void;
+  status(action: 'get'): CompletionStatus<T>;
+  status(action: 'set', status: CompletionStatus<T>): boolean;
+  /** Subscribe to typed runtime events, optionally using an AbortSignal for cleanup. */
+  addEventListener<K extends keyof ScormEvents>(
+    event: K,
+    callback: (event: CustomEvent<ScormEvents[K]>) => void,
+    options?: boolean | AddEventListenerOptions,
+  ): void;
+  /** Remove a listener using the same callback and capture setting. */
+  removeEventListener<K extends keyof ScormEvents>(
+    event: K,
+    callback: (event: CustomEvent<ScormEvents[K]>) => void,
+    options?: boolean | EventListenerOptions,
+  ): void;
+  /** Compatibility alias for addEventListener. */
+  on: (event: ScormEventType, callback: ScormListener, options?: boolean | AddEventListenerOptions) => void;
+  /** Compatibility alias for addEventListener('any', callback, options). */
+  onAny: (callback: ScormAnyListener, options?: boolean | AddEventListenerOptions) => void;
+  /** Compatibility alias for removeEventListener. */
+  off: (event: ScormEventType, callback: ScormListener, options?: boolean | EventListenerOptions) => void;
+  /** Compatibility alias for removeEventListener('any', callback, options). */
+  offAny: (callback: ScormAnyListener, options?: boolean | EventListenerOptions) => void;
 }
 
 declare global {
@@ -460,44 +468,31 @@ declare global {
  * @param {unknown} value any data
  * @returns {boolean} converted value
  */
-const parseBool = (value: unknown): boolean => {
-  switch (typeof value) {
-    case 'object':
-      return true;
-    case 'string':
-      return /(true|1)/i.test(value);
-    case 'number':
-      return !!value;
-    case 'boolean':
-      return value;
-    default:
-      return false;
-  }
-};
+const parseBool = (value: unknown): boolean =>
+  value === true || value === 1 || (typeof value === 'string' && ['true', '1'].includes(value.trim().toLowerCase()));
 
 /**
- * Calculate the size of a string in bytes
+ * Count Unicode code points to match SCORM suspend-data character limits.
  *
  * @param str string to be used
- * @returns size in bytes
+ * @returns number of characters
  */
-const calculateStringSizeInBytes = (str: string): number => {
-  // Use the TextEncoder API to encode the string as UTF-8
-  const encoder = new TextEncoder();
-  const encodedString = encoder.encode(str);
+const calculateStringLength = (str: string): number => Array.from(str).length;
 
-  // The length of the encoded string represents the size in bytes
-  return encodedString.length;
+type ScormEventType = 'init' | 'set' | 'storage';
+type ScormEvents = Record<ScormEventType, unknown> & {
+  any: { event: ScormEventType; data: unknown };
 };
+type ScormListener = (event: CustomEvent<unknown>) => void;
+type ScormAnyListener = (event: CustomEvent<{ event: ScormEventType; data: unknown }>) => void;
 
 export class ScormInstance<T extends availableVersions = 'auto'> implements IScormClass<T> {
   private _version: IScormClass<T>['version'];
-  private _handleCompletionStatus: IScormClass<T>['handleCompletionStatus'];
-  private _handleExitMode: IScormClass<T>['handleExitMode'];
-  private _autoCommit: IScormClass<T>['autoCommit'];
+  private _handleCompletionStatus: boolean;
+  private _handleExitMode: boolean;
+  private _autoCommit: boolean;
 
-  private onList: { type: 'init' | 'set' | 'storage'; callback: (data: unknown) => void }[] = [];
-  private onAnyList: { callback: (type: 'init' | 'set' | 'storage', data: unknown) => void }[] = [];
+  private readonly eventTarget = new TypedEventTarget<ScormEvents>();
 
   get version() {
     return this._version;
@@ -532,7 +527,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
   connection: IScormClass<T>['connection'] = { isActive: false };
 
   data: IScormClass<T>['data'] = {
-    completionStatus: 'not attempted',
+    completionStatus: 'not attempted' as CompletionStatus<T>,
     exitStatus: false,
   };
 
@@ -551,10 +546,9 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
     autoCommit = true,
   }: IScormProps<T>) {
     // Set up params
-    this._version = version;
+    this._version = (version ?? 'auto') as IScormClass<T>['version'];
     this.debug.isActive = Boolean(debug);
     this._handleCompletionStatus = handleCompletionStatus;
-    this._handleExitMode = Boolean(handleExitMode);
     this._handleExitMode = Boolean(handleExitMode);
     this._autoCommit = Boolean(autoCommit);
   }
@@ -572,7 +566,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
   //      SCORM Connection      //
   //----------------------------//
 
-  init() {
+  init(): boolean {
     const { debug, data, connection } = this;
 
     const traceMsgPrefix = 'SCORM.connection.initialize ';
@@ -587,7 +581,6 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
     if (!this.connection.isActive) {
       const API = this.API.getHandle();
-      let errorCode = 0;
       let success = false;
 
       if (API) {
@@ -601,50 +594,40 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
         }
 
         if (success) {
-          //Double-check that connection is active and working before returning 'true' boolean
-          errorCode = debug.getCode() as number;
+          const errorCode = debug.getCode();
 
-          if (errorCode !== null && errorCode === 0) {
+          if (errorCode === 0) {
             this.connection.isActive = true;
 
             this.handleEvent('init', true);
 
             if (this._handleCompletionStatus) {
-              //Automatically set new launches to incomplete
-              data.completionStatus = this.status('get') as lesson_status;
+              data.completionStatus = this.status('get');
+              const isNewAttempt =
+                data.completionStatus === 'not attempted' ||
+                (this.version === '2004' && data.completionStatus === 'unknown');
 
-              if (data.completionStatus) {
-                switch (data.completionStatus) {
-                  //Both SCORM 1.2 and 2004
-                  case 'not attempted':
-                    this.status('set', 'incomplete');
-                    break;
+              if (isNewAttempt) {
+                const updated = this.status('set', 'incomplete' as CompletionStatus<T>);
 
-                  //SCORM 2004 only
-                  case 'unknown':
-                    this.status('set', 'incomplete');
-                    break;
-                }
-
-                //Commit changes
-                this.save();
+                if (updated && !this.autoCommit) this.save();
               }
             }
           } else {
             success = false;
             this.log(`${traceMsgPrefix}failed. 
   Error code: ${errorCode} 
-  Error info: ${debug.getInfo(errorCode)}`);
+  Error info: ${errorCode === undefined ? undefined : debug.getInfo(errorCode)}`);
           }
         } else {
-          errorCode = debug.getCode() as number;
+          const errorCode = debug.getCode();
 
-          if (errorCode !== null && errorCode !== 0) {
+          if (errorCode !== undefined && errorCode !== 0) {
             this.log(`${traceMsgPrefix}failed. 
   Error code: ${errorCode} 
   Error info: ${debug.getInfo(errorCode)}`);
           } else {
-            this.log(`${traceMsgPrefix}failed: No response from server.`);
+            this.log(`${traceMsgPrefix}failed: The API returned false.`);
           }
         }
       } else {
@@ -653,6 +636,8 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
       return success;
     }
+
+    return false;
   }
 
   terminate() {
@@ -665,54 +650,62 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
     if (connection.isActive) {
       const API = this.API.getHandle();
-      let errorCode = 0;
+      let exitModeSuccess = true;
 
       if (API) {
         if (handleExitMode && !exitStatus) {
-          if (completionStatus !== 'completed' && completionStatus !== 'passed') {
+          const isComplete =
+            version === '1.2'
+              ? completionStatus === 'completed' || completionStatus === 'passed'
+              : completionStatus === 'completed';
+
+          if (!isComplete) {
             switch (version) {
               case '1.2':
-                success = this.set('cmi.core.exit' as CMIElement<T>, 'suspend');
+                exitModeSuccess = this.setValue('cmi.core.exit' as CMIElement<T>, 'suspend', false);
                 break;
               case '2004':
-                success = this.set('cmi.exit' as CMIElement<T>, 'suspend');
+                exitModeSuccess = this.setValue('cmi.exit' as CMIElement<T>, 'suspend', false);
                 break;
             }
           } else {
             switch (version) {
               case '1.2':
-                success = this.set('cmi.core.exit' as CMIElement<T>, 'logout');
+                exitModeSuccess = this.setValue('cmi.core.exit' as CMIElement<T>, 'logout', false);
                 break;
               case '2004':
-                success = this.set('cmi.exit' as CMIElement<T>, 'normal');
+                exitModeSuccess = this.setValue('cmi.exit' as CMIElement<T>, 'normal', false);
                 break;
             }
           }
-
-          if (this.autoCommit) this.save();
         }
 
-        //Ensure we persist the data for 1.2 - not required for 2004 where an implicit commit is applied during the Terminate
-        success = this.version === '1.2' ? this.save() : true;
+        const commitSuccess = this.version === '1.2' ? this.save() : true;
 
-        if (success) {
+        if (commitSuccess) {
+          let terminateSuccess = false;
+
           switch (this.version) {
             case '1.2':
-              success = parseBool((API as IScorm1_2).LMSFinish(''));
+              terminateSuccess = parseBool((API as IScorm1_2).LMSFinish(''));
               break;
             case '2004':
-              success = parseBool((API as IScorm2004).Terminate(''));
+              terminateSuccess = parseBool((API as IScorm2004).Terminate(''));
               break;
           }
 
-          if (success) {
+          if (terminateSuccess) {
             connection.isActive = false;
           } else {
-            errorCode = debug.getCode() as number;
+            const errorCode = debug.getCode();
             this.log(`${traceMsgPrefix}failed. 
   Error code: ${errorCode} 
-  Error info: ${debug.getInfo(errorCode)}`);
+  Error info: ${errorCode === undefined ? undefined : debug.getInfo(errorCode)}`);
           }
+
+          success = exitModeSuccess && terminateSuccess;
+        } else {
+          success = false;
         }
       } else {
         this.log(`${traceMsgPrefix}failed: API is null.`);
@@ -728,16 +721,15 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
   //         SCORM Data         //
   //----------------------------//
 
-  get(parameter: CMIElement<T>) {
+  get(parameter: CMIElement<T>): string {
     const { debug, connection, version, data } = this;
 
     const traceMsgPrefix = "SCORM.data.get('" + parameter + "') ";
 
-    let value = null;
+    let value = '';
 
     if (connection.isActive) {
       const API = this.API.getHandle();
-      let errorCode = 0;
 
       if (API) {
         switch (version) {
@@ -749,7 +741,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
             break;
         }
 
-        errorCode = debug.getCode() as number;
+        const errorCode = debug.getCode();
 
         //GetValue returns an empty string on errors
         //If value is an empty string, check errorCode to make sure there are no errors
@@ -760,7 +752,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
           switch (parameter) {
             case 'cmi.core.lesson_status':
             case 'cmi.completion_status':
-              data.completionStatus = value as lesson_status;
+              data.completionStatus = value as CompletionStatus<T>;
               break;
 
             case 'cmi.core.exit':
@@ -771,7 +763,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
         } else {
           this.log(`${traceMsgPrefix}failed. 
   Error code: ${errorCode} 
-  Error info: ${debug.getInfo(errorCode)}`);
+  Error info: ${errorCode === undefined ? undefined : debug.getInfo(errorCode)}`);
         }
       } else {
         this.log(`${traceMsgPrefix}failed: API is null.`);
@@ -782,10 +774,14 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
     this.log(`${traceMsgPrefix} value: ${value}`);
 
-    return String(value);
+    return value;
   }
 
-  set(parameter: CMIElement<T>, value: string) {
+  set(parameter: CMIElement<T>, value: string): boolean {
+    return this.setValue(parameter, value, this._autoCommit);
+  }
+
+  private setValue(parameter: CMIElement<T>, value: string, commit: boolean): boolean {
     const { debug, connection, version, data } = this;
 
     const traceMsgPrefix = "SCORM.data.set('" + parameter + "') ";
@@ -794,7 +790,6 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
     if (connection.isActive) {
       const API = this.API.getHandle();
-      let errorCode = 0;
 
       if (API) {
         switch (version) {
@@ -808,18 +803,18 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
         if (success) {
           if (parameter === 'cmi.core.lesson_status' || parameter === 'cmi.completion_status') {
-            data.completionStatus = value as lesson_status;
+            data.completionStatus = value as CompletionStatus<T>;
           }
 
           this.handleEvent('set', { parameter, value });
 
-          if (this._autoCommit) this.save();
+          if (commit && !this.save()) success = false;
         } else {
-          errorCode = debug.getCode() as number;
+          const errorCode = debug.getCode();
 
           this.log(`${traceMsgPrefix}failed. 
   Error code: ${errorCode} 
-  Error info: ${debug.getInfo(errorCode)}`);
+  Error info: ${errorCode === undefined ? undefined : debug.getInfo(errorCode)}`);
         }
       } else {
         this.log(`${traceMsgPrefix}failed: API is null.`);
@@ -838,15 +833,19 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
     const _value = typeof value === 'function' ? value(storage) : value;
     const string = JSON.stringify(_value);
 
+    if (string === undefined) {
+      throw new TypeError('SCORM suspend data must be JSON-serializable.');
+    }
+
     // if there is nothing to update give up
     if (string === JSON.stringify(storage)) return false;
 
-    const size = calculateStringSizeInBytes(string);
+    const size = calculateStringLength(string);
     const limit = this.version === '1.2' ? 4096 : 64000;
 
-    if (size >= limit) {
+    if (size > limit) {
       console.warn(
-        `SCORM ${this.version} has suspend data limit of ${limit}B,\nyour data is currently at ${size}B and may not be stored correctly`,
+        `SCORM ${this.version} has a suspend data limit of ${limit} characters,\nyour data is currently at ${size} characters and may not be stored correctly`,
       );
     }
 
@@ -856,10 +855,10 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
     this.handleEvent('storage', _value);
 
-    return this.autoCommit ? this.save() : success;
+    return success;
   }
 
-  save() {
+  save(): boolean {
     const { connection, version } = this;
 
     const traceMsgPrefix = 'SCORM.data.save failed';
@@ -878,6 +877,18 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
             success = parseBool((API as IScorm2004).Commit(''));
             break;
         }
+
+        const errorCode = this.debug.getCode();
+
+        if (success && errorCode !== 0) success = false;
+
+        if (!success) {
+          this.log(
+            `${traceMsgPrefix}. Error code: ${errorCode}. Error info: ${
+              errorCode === undefined ? undefined : this.debug.getInfo(errorCode)
+            }`,
+          );
+        }
       } else {
         this.log(traceMsgPrefix + ': API is null.');
       }
@@ -892,7 +903,9 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
   //        SCORM Status        //
   //----------------------------//
 
-  status(action: 'get' | 'set', status?: lesson_status): lesson_status | boolean {
+  status(action: 'get'): CompletionStatus<T>;
+  status(action: 'set', status: CompletionStatus<T>): boolean;
+  status(action: 'get' | 'set', status?: CompletionStatus<T>): CompletionStatus<T> | boolean {
     const { version } = this;
 
     const traceMsgPrefix = 'SCORM.getStatus failed';
@@ -905,18 +918,14 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
 
     switch (action) {
       case 'get':
-        return this.get(cmi) as lesson_status;
+        return this.get(cmi) as CompletionStatus<T>;
       case 'set':
         if (!status) {
           this.log(traceMsgPrefix + ': status was not specified.');
           return false;
         }
 
-        if (!this.autoCommit) return this.set(cmi, status);
-
-        this.set(cmi, status);
-
-        return this.save();
+        return this.set(cmi, status);
       default:
         this.log(traceMsgPrefix + ': no valid action was specified.');
         return false;
@@ -940,13 +949,13 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
     let findAttempts = 0;
 
     try {
-      while (!win.API && !win.API_1484_11 && win.parent && win.parent != win && findAttempts <= findAttemptLimit) {
+      while (!win.API && !win.API_1484_11 && win.parent && win.parent !== win && findAttempts <= findAttemptLimit) {
         findAttempts++;
         win = win.parent;
       }
 
       //If SCORM version is specified by user, look for specific API
-      if (this.version) {
+      if (this.version === '1.2' || this.version === '2004') {
         switch (this.version) {
           case '2004':
             if (!win.API_1484_11)
@@ -968,11 +977,11 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
         //If SCORM version not specified by user, look for APIs
         if (win.API_1484_11) {
           //SCORM 2004-specific API.
-          this._version = '2004' as T; //Set version
+          this._version = '2004' as IScormClass<T>['version'];
           API = win.API_1484_11 as IScorm<T>;
         } else if (win.API) {
           //SCORM 1.2-specific API
-          this._version = '1.2' as T; //Set version
+          this._version = '1.2' as IScormClass<T>['version'];
           API = win.API as IScorm<T>;
         }
       }
@@ -997,14 +1006,15 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
    * Find a copy of SCORM (using current window)
    */
   private scormApiGet(): null | IScorm<T> {
+    if (typeof window === 'undefined') return null;
+
     const win = window;
 
     try {
       const API: IScorm<T> | null =
         this.scormApiFind(win) ||
-        (win.parent && win.parent != win && this.scormApiFind(win.parent)) ||
-        (win.top?.opener && this.scormApiFind(win.top.opener)) ||
-        (win.top?.opener.document && this.scormApiFind(win.top.opener.document));
+        (win.parent && win.parent !== win && this.scormApiFind(win.parent)) ||
+        (win.top?.opener && this.scormApiFind(win.top.opener));
 
       if (!API) throw new Error("API.get failed: Can't find the API!");
 
@@ -1114,26 +1124,40 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
    * @param event event type
    * @param data data that was modified
    */
-  private handleEvent(event: 'init' | 'set' | 'storage', data: unknown) {
-    this.onList.filter((obj) => obj.type === event).forEach((obj) => obj.callback(data));
-    this.onAnyList.forEach((obj) => obj.callback(event, data));
+  private handleEvent(event: ScormEventType, data: unknown) {
+    this.eventTarget.dispatchEvent(event, data);
+    this.eventTarget.dispatchEvent('any', { event, data });
   }
 
-  on(event: 'init' | 'set' | 'storage', callback: (data: unknown) => void) {
-    this.onList.push({ type: event, callback });
+  addEventListener<K extends keyof ScormEvents>(
+    event: K,
+    callback: (event: CustomEvent<ScormEvents[K]>) => void,
+    options?: boolean | AddEventListenerOptions,
+  ) {
+    this.eventTarget.addEventListener(event, callback, options);
   }
 
-  onAny(callback: (event: 'init' | 'set' | 'storage', data: unknown) => void) {
-    this.onAnyList.push({ callback });
+  on(event: ScormEventType, callback: ScormListener, options?: boolean | AddEventListenerOptions) {
+    this.addEventListener(event, callback, options);
   }
 
-  off(event: 'init' | 'set' | 'storage', callback: (data: unknown) => void) {
-    const remove = this.onList.indexOf(this.onList.filter((e) => e.type === event && e.callback === callback)[0]);
-    if (remove >= 0) this.onList.splice(remove, 1);
+  onAny(callback: ScormAnyListener, options?: boolean | AddEventListenerOptions) {
+    this.addEventListener('any', callback, options);
   }
 
-  offAny(callback: (event: 'init' | 'set' | 'storage', data: unknown) => void) {
-    const remove = this.onAnyList.indexOf(this.onAnyList.filter((e) => e.callback === callback)[0]);
-    if (remove >= 0) this.onAnyList.splice(remove, 1);
+  removeEventListener<K extends keyof ScormEvents>(
+    event: K,
+    callback: (event: CustomEvent<ScormEvents[K]>) => void,
+    options?: boolean | EventListenerOptions,
+  ) {
+    this.eventTarget.removeEventListener(event, callback, options);
+  }
+
+  off(event: ScormEventType, callback: ScormListener, options?: boolean | EventListenerOptions) {
+    this.removeEventListener(event, callback, options);
+  }
+
+  offAny(callback: ScormAnyListener, options?: boolean | EventListenerOptions) {
+    this.removeEventListener('any', callback, options);
   }
 }

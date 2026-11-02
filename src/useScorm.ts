@@ -1,8 +1,8 @@
-import { useMemo, createContext } from 'react';
+import { createContext, useEffect, useState } from 'react';
 
-import { ScormInstance } from './ScormInstance';
+import { ScormInstance } from './ScormInstance.js';
 
-import type { IScormProps, IScormClass, availableVersions } from './ScormInstance';
+import type { IScormProps, IScormClass, availableVersions } from './ScormInstance.js';
 
 export default function useScorm<T extends availableVersions = 'auto'>({
   version,
@@ -11,13 +11,17 @@ export default function useScorm<T extends availableVersions = 'auto'>({
   handleExitMode,
   autoCommit,
 }: IScormProps<T>) {
-  return useMemo(() => {
-    const _instance = new ScormInstance({ version, debug, handleCompletionStatus, handleExitMode, autoCommit });
+  const [instance] = useState(
+    new ScormInstance({ version, debug, handleCompletionStatus, handleExitMode, autoCommit }),
+  );
 
-    _instance.init();
+  useEffect(() => {
+    instance.init();
 
-    return _instance;
-  }, [version, debug, handleCompletionStatus, handleExitMode, autoCommit]);
+    return () => void (instance.connection.isActive && instance.terminate());
+  }, [instance]);
+
+  return instance;
 }
 
 export const ScormContext = createContext<IScormClass<'auto'> | null>(null);

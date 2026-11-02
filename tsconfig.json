@@ -2,13 +2,14 @@
   "include": ["src"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
   "compilerOptions": {
+    "rootDir": "src",
     "outDir": "dist/esm/",
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "Node16",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "node16",
     "noImplicitAny": true
   }
 }
