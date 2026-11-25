@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { renderHook } from '@testing-library/react';
 
 import useScorm, { ScormInstance, type IScorm1_2, type IScorm2004, type IScormClass } from './index.js';
@@ -291,7 +292,7 @@ describe('ScormInstance', () => {
     controller.abort();
   });
 
-  it('initializes after mount and terminates when the hook unmounts', () => {
+  it('initializes after mount and terminates when the hook unmounts', async () => {
     const { api } = createScorm12Api();
     window.API = api;
 
@@ -303,7 +304,86 @@ describe('ScormInstance', () => {
     expect(api.LMSInitialize).toHaveBeenCalledTimes(1);
 
     unmount();
+    await Promise.resolve();
 
     expect(api.LMSFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the session open through StrictMode effect replays', async () => {
+    const { api } = createScorm2004Api();
+    window.API_1484_11 = api;
+
+    const { result, unmount } = renderHook(() => useScorm({ handleCompletionStatus: false }), {
+      wrapper: StrictMode,
+    });
+
+    expect(result.current.connection.isActive).toBe(true);
+    expect(api.Initialize).toHaveBeenCalledTimes(1);
+    expect(api.Terminate).not.toHaveBeenCalled();
+
+    unmount();
+    await Promise.resolve();
+
+    expect(api.Terminate).toHaveBeenCalledTimes(1);
+  });
+
+  it('can be called without options', () => {
+    const { api } = createScorm12Api();
+    window.API = api;
+
+    const { result } = renderHook(() => useScorm());
+
+    expect(result.current.version).toBe('1.2');
+    expect(new ScormInstance().version).toBe('auto');
+  });
+
+  it('terminates on pagehide when terminateOnUnload is enabled', () => {
+    const { api } = createScorm12Api();
+    window.API = api;
+
+    renderHook(() => useScorm({ handleCompletionStatus: false, autoCommit: false, terminateOnUnload: true }));
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(api.LMSCommit).toHaveBeenCalledTimes(1);
+    expect(api.LMSFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not terminate on pagehide by default', () => {
+    const { api } = createScorm12Api();
+    window.API = api;
+
+    renderHook(() => useScorm({ handleCompletionStatus: false }));
+    window.dispatchEvent(new Event('pagehide'));
+
+    expect(api.LMSFinish).not.toHaveBeenCalled();
+  });
+
+  it('keeps an exit mode set by the course', () => {
+    const { api, values } = createScorm2004Api();
+    window.API_1484_11 = api;
+    const scorm = new ScormInstance({ handleCompletionStatus: false });
+
+    expect(scorm.init()).toBe(true);
+    expect(scorm.set('cmi.exit', 'normal')).toBe(true);
+    expect(scorm.terminate()).toBe(true);
+    expect(values['cmi.exit']).toBe('normal');
+  });
+
+  it('treats suspend data that is not JSON as empty instead of throwing', () => {
+    const { api, values } = createScorm2004Api();
+    values['cmi.suspend_data'] = 'legacy;format';
+    window.API_1484_11 = api;
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const scorm = new ScormInstance({ handleCompletionStatus: false });
+
+    try {
+      expect(scorm.init()).toBe(true);
+      expect(scorm.storage).toBeNull();
+      expect(warn).toHaveBeenCalled();
+      expect(scorm.store({ page: 1 })).toBe(true);
+      expect(values['cmi.suspend_data']).toBe('{"page":1}');
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

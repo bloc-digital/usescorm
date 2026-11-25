@@ -270,11 +270,15 @@ export type CompletionStatus<T extends availableVersions> = T extends '1.2'
 
 export interface IScormProps<T extends availableVersions = 'auto'> {
   /**
-   * Version of scorm used
+   * SCORM version to use. `'auto'` detects it from the API the LMS exposes.
+   *
+   * @default 'auto'
    */
   version?: T;
   /**
-   * Whether or not debug mode is enabled
+   * Log API discovery and runtime failures to the console
+   *
+   * @default false
    */
   debug?: boolean;
   /**
@@ -290,7 +294,9 @@ export interface IScormProps<T extends availableVersions = 'auto'> {
    */
   handleExitMode?: boolean;
   /**
-   * Whether or not the each action automatically saves
+   * Commit after every successful write. Set to `false` to batch writes and call `save()`.
+   *
+   * @default true
    */
   autoCommit?: boolean;
   /**
@@ -484,7 +490,13 @@ export const parseBool = (value: unknown): boolean =>
 const calculateStringLength = (str: string): number => Array.from(str).length;
 
 type ScormEventType = 'init' | 'set' | 'storage';
-type ScormEvents = Record<ScormEventType, unknown> & {
+type ScormEvents = {
+  /** `true` after the LMS session opens. */
+  init: boolean;
+  /** A successful data-model write. */
+  set: { parameter: string; value: string };
+  /** Parsed suspend data after a successful `store()`. */
+  storage: unknown;
   any: { event: ScormEventType; data: unknown };
 };
 type ScormListener = (event: CustomEvent<unknown>) => void;
@@ -518,7 +530,14 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
   get storage() {
     const _storage = this.get('cmi.suspend_data' as CMIElement<T>);
 
-    return _storage ? JSON.parse(_storage) : null;
+    if (!_storage) return null;
+
+    try {
+      return JSON.parse(_storage);
+    } catch {
+      console.warn('SCORM suspend data is not valid JSON, so storage is treated as empty.');
+      return null;
+    }
   }
 
   API: IScormClass<T>['API'] = {
@@ -550,7 +569,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
     handleExitMode = true,
     autoCommit = true,
     api,
-  }: IScormProps<T>) {
+  }: IScormProps<T> = {}) {
     // Set up params
     this._version = (version ?? 'auto') as IScormClass<T>['version'];
     this.debug.isActive = Boolean(debug);
@@ -811,6 +830,11 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
         if (success) {
           if (parameter === 'cmi.core.lesson_status' || parameter === 'cmi.completion_status') {
             data.completionStatus = value as CompletionStatus<T>;
+          }
+
+          // cmi.exit is write-only, so track it here to stop terminate() overriding it.
+          if (parameter === 'cmi.core.exit' || parameter === 'cmi.exit') {
+            data.exitStatus = Boolean(value);
           }
 
           this.handleEvent('set', { parameter, value });
@@ -1150,7 +1174,7 @@ export class ScormInstance<T extends availableVersions = 'auto'> implements ISco
    * @param event event type
    * @param data data that was modified
    */
-  private handleEvent(event: ScormEventType, data: unknown) {
+  private handleEvent<K extends ScormEventType>(event: K, data: ScormEvents[K]) {
     this.eventTarget.dispatchEvent(event, data);
     this.eventTarget.dispatchEvent('any', { event, data });
   }

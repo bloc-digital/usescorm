@@ -22,7 +22,8 @@ const initialValues = {
 };
 
 export default function App({ bridge }: { bridge?: ScormBridge }) {
-  const scorm = useScorm({ debug: true, autoCommit: false, api: bridge?.api });
+  // Behind the bridge the host terminates on unload, so the course must not.
+  const scorm = useScorm({ debug: true, autoCommit: false, api: bridge?.api, terminateOnUnload: !bridge });
   const [active, setActive] = useState(false);
   const [ended, setEnded] = useState(false);
   const [values, setValues] = useState(initialValues);
@@ -78,15 +79,6 @@ export default function App({ bridge }: { bridge?: ScormBridge }) {
       { signal },
     );
     run('Automatic initialization', () => scorm.connection.isActive);
-    window.addEventListener(
-      'pagehide',
-      () => {
-        if (scorm.connection.isActive && run('Commit before leaving', () => scorm.save())) {
-          run('Terminate before leaving', () => scorm.terminate());
-        }
-      },
-      { signal },
-    );
 
     return () => controller.abort();
   }, [log, run, scorm]);

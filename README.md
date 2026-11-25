@@ -40,7 +40,51 @@ export function Lesson() {
 
 For SCORM 1.2, use `version: '1.2'`; its lesson status is stored in
 `cmi.core.lesson_status`. SCORM 2004 uses `cmi.completion_status`. You can omit
-`version` or set it to `'auto'` to detect the LMS API.
+`version` or set it to `'auto'` to detect the LMS API. All options are
+optional, so `useScorm()` works too.
+
+### Lifecycle
+
+- The hook calls `init()` after the component mounts and `terminate()` after
+  it unmounts. Call it once, near the root of the course, and share the
+  instance (for example through `ScormContext`) instead of calling it in many
+  components.
+- It is safe under React `<StrictMode>` and Fast Refresh. Their replayed
+  effects do not end the LMS session, because an LMS will not reopen a session
+  that was terminated. Termination on unmount therefore runs one microtask
+  after the cleanup.
+- Options are read once, on the first render. Later changes are ignored,
+  except `terminateOnUnload`.
+- React does not unmount components when the page closes. If the LMS closes
+  the window, the session is only terminated if you set `terminateOnUnload` or
+  call `terminate()` yourself. With the default `autoCommit: true`, every write
+  is already committed.
+
+### Rendering SCORM data
+
+The hook returns the same mutable `ScormInstance` on every render and does not
+re-render your component when SCORM data changes. To show a value, copy it into
+state and update it from the events:
+
+```tsx
+function Progress({ scorm }: { scorm: ReturnType<typeof useScorm> }) {
+  const [location, setLocation] = useState(() => scorm.get('cmi.location'));
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    scorm.addEventListener(
+      'set',
+      ({ detail }) => detail.parameter === 'cmi.location' && setLocation(detail.value),
+      { signal: controller.signal },
+    );
+
+    return () => controller.abort();
+  }, [scorm]);
+
+  return <p>Bookmark: {location || 'none'}</p>;
+}
+```
 
 ## Options
 
@@ -49,9 +93,13 @@ For SCORM 1.2, use `version: '1.2'`; its lesson status is stored in
 | `version` | `'auto'` | `'1.2'`, `'2004'`, or automatic detection. |
 | `debug` | `false` | Log API discovery and runtime failures. |
 | `handleCompletionStatus` | `true` | Change a new or unknown attempt to incomplete. |
-| `handleExitMode` | `true` | Set an exit mode when the session terminates. |
+| `handleExitMode` | `true` | On terminate, set the exit mode to `suspend` (incomplete) or `logout` / `normal` (complete), unless you already set `cmi.core.exit` / `cmi.exit`. |
 | `autoCommit` | `true` | Commit successful updates automatically. Set to `false` to batch updates and call `save()`. |
 | `api` | — | Use this SCORM API object instead of searching parent windows. Used with the [postMessage bridge](#remote-courses-postmessage-bridge). |
+| `terminateOnUnload` | `false` | Hook only. Commit and terminate on `pagehide`, for LMSs that close the window without unmounting React. Leave it off behind the bridge; the host handles unloading. |
+
+The same options, except `terminateOnUnload`, are accepted by
+`new ScormInstance(options)` for use without React.
 
 ## Runtime methods
 
@@ -66,7 +114,9 @@ For SCORM 1.2, use `version: '1.2'`; its lesson status is stored in
 | `removeEventListener(event, callback, options)` | Remove a listener explicitly when not using an abort signal. |
 
 `storage` contains parsed suspend data, or `null` when no saved data exists.
-Suspend data must be JSON-serializable. The SCORM limits are 4,096 characters
+If the existing suspend data is not JSON (for example, it was written by
+another tool), `storage` is `null` with a console warning, and the next
+`store()` replaces it. Suspend data must be JSON-serializable. The SCORM limits are 4,096 characters
 for SCORM 1.2 and 64,000 characters for SCORM 2004; oversized values may be
 rejected or truncated by the LMS.
 
@@ -84,7 +134,7 @@ available in `event.detail`.
 | --- | --- |
 | `init` | `true` after successful LMS initialization. |
 | `set` | `{ parameter, value }` for a successful data-model write. |
-| `storage` | Parsed suspend data, or `null` if there is no saved value. |
+| `storage` | The value that `store()` just saved. |
 | `any` | `{ event, data }` for each of the events above. |
 
 Use an `AbortController` to clean up one or more subscriptions together. In
@@ -111,7 +161,7 @@ These aliases use the same `CustomEvent` callback syntax.
 ## Types
 
 The package exports `ScormInstance`, `ScormContext`, `IScorm1_2`, `IScorm2004`,
-`IScormProps`, `IScormClass`, `CMIElement1_2`, and `CMIElement2004`, along with
+`IScormProps`, `IUseScormProps`, `IScormClass`, `CMIElement1_2`, and `CMIElement2004`, along with
 the status and API types. For a version-specific hook, pass a literal version
 such as `useScorm({ version: '2004' })`.
 
@@ -192,6 +242,7 @@ export function App() {
 
 function Course({ bridge }: { bridge: ScormBridge }) {
   // Mount only once the bridge exists: useScorm reads `api` when it is first created.
+  // Leave terminateOnUnload off: the host terminates on unload, and a reloaded course can reconnect.
   const scorm = useScorm({ api: bridge.api });
 
   useEffect(() => {
